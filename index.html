@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Energy Meter Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         * {
@@ -135,12 +134,6 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             margin-bottom: 30px;
-        }
-
-        .chart-container h2 {
-            font-size: 1.5em;
-            margin-bottom: 20px;
-            color: #64B5F6;
         }
 
         .last-update {
@@ -347,11 +340,6 @@
             </div>
         </div>
 
-        <div class="chart-container">
-            <h2>Real-time Power Consumption</h2>
-            <canvas id="powerChart"></canvas>
-        </div>
-
         <div class="last-update">
             Last Update: <span id="lastUpdate">-</span>
         </div>
@@ -360,75 +348,10 @@
     <script>
         let client = null;
         let connected = false;
-        let powerChart = null;
-        let chartData = {
-            labels: [],
-            datasets: [{
-                label: 'Power (W)',
-                data: [],
-                borderColor: '#4CAF50',
-                backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                tension: 0.4,
-                fill: true
-            }]
-        };
 
         // Encryption key for localStorage
         const STORAGE_KEY = 'mqtt_dashboard_settings';
         const ENCRYPTION_KEY = 'energy-meter-2024';
-
-        // Initialize Chart
-        const ctx = document.getElementById('powerChart').getContext('2d');
-        powerChart = new Chart(ctx, {
-            type: 'line',
-            data: chartData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: '#fff'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: '#fff'
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: '#fff'
-                        }
-                    }
-                }
-            }
-        });
-
-        function updateChart(power) {
-            const now = new Date();
-            const timeLabel = now.toLocaleTimeString();
-            
-            chartData.labels.push(timeLabel);
-            chartData.datasets[0].data.push(power);
-            
-            // Keep only last 20 data points
-            if (chartData.labels.length > 20) {
-                chartData.labels.shift();
-                chartData.datasets[0].data.shift();
-            }
-            
-            powerChart.update();
-        }
 
         function updateUI(data) {
             // Update voltage
@@ -448,7 +371,6 @@
             // Update power and energy
             if (data.totalPower !== undefined) {
                 document.getElementById('totalPower').textContent = data.totalPower.toFixed(2);
-                updateChart(data.totalPower);
             }
             
             if (data.totalEnergy !== undefined) {
@@ -583,7 +505,6 @@
                     } else if (topic === 'energymeter/power') {
                         const power = parseFloat(message.toString());
                         document.getElementById('totalPower').textContent = power.toFixed(2);
-                        updateChart(power);
                     } else if (topic === 'energymeter/energy') {
                         document.getElementById('totalEnergy').textContent = parseFloat(message.toString()).toFixed(2);
                     }
